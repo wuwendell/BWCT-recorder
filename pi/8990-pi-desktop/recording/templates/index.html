@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Recording</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .recording {
+            color: green;
+        }
+
+        .not-recording {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>Camera Recording Status</h1>
+    <p>Is recording: <span id="recording-status" class="{{ 'recording' if camera_recording else 'not-recording' }}">{{ camera_recording }}</span></p>
+    <p>Recording duration: <span id="duration">{{ camera_duration }}</span> minutes</p>
+
+    <button id="start-recording" onclick="startRecording()" style="display:{{ 'none' if camera_recording else 'inline-block' }}">Start Recording</button>
+    <button id="stop-recording" onclick="stopRecording()" style="display:{{ 'inline-block' if camera_recording else 'none' }}">Stop Recording</button>
+
+    <script>
+        var camera_recording = {{ camera_recording|tojson|safe }};
+        var camera_duration = {{ camera_duration|tojson|safe }};
+
+        function startRecording() {
+            fetch('/start_recording')
+                .then(response => response.json())
+                .then(data => {
+                    camera_recording = true;
+                    camera_duration = 0;
+                    updateUI();
+                });
+        }
+
+        function stopRecording() {
+            fetch('/stop_recording')
+                .then(response => response.json())
+                .then(data => {
+                    camera_recording = false;
+                    updateUI();
+                });
+        }
+
+        function updateUI() {
+            document.getElementById('recording-status').textContent = camera_recording;
+            document.getElementById('duration').textContent = camera_duration;
+            document.getElementById('start-recording').style.display = camera_recording ? 'none' : 'inline-block';
+            document.getElementById('stop-recording').style.display = camera_recording ? 'inline-block' : 'none';
+        }
+
+        setInterval(function() {
+            if (camera_recording) {
+                camera_duration += 1;
+            }
+            updateUI();
+        }, 60000);
+    </script>
+</body>
+</html>
