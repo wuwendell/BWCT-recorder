@@ -30,11 +30,11 @@ for /f "tokens=*" %%b in ("!duration_line:*Duration=!") do (
 set "duration=!duration:~0,-7!"
 
 REM Get user input for trim durations
-set /p trim_start="Enter trim start duration (HH:MM:SS.mmm): "
-set /p trim_end="Enter trim end duration (HH:MM:SS.mmm): "
+set /p trim_start="Enter starting timestamp of input video (HH:MM:SS.mmm): "
+set /p trim_end="Enter ending timestamp of input video (HH:MM:SS.mmm): "
 
 REM Run ffmpeg to trim the video
-ffmpeg -ss %trim_start% -i "%input_file%" -to %trim_end% -c copy "%output_file%"
+ffmpeg -ss %trim_start% -to %trim_end% -i "%input_file%" -c copy "%output_file%"
 
 echo Video trimmed successfully.
 pause
