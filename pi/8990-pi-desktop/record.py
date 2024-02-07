@@ -1,3 +1,8 @@
+# https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf
+# how to stop jittery dropped frames in our vids?
+# see section 4.2.1.3 in the picamera2 manual above about buffer_count
+# 
+
 from picamera2 import Picamera2
 from picamera2.encoders import Quality
 import datetime
