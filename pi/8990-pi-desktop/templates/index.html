@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recording Control</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        #status {
+            font-size: 20px;
+            margin-top: 10px;
+        }
+
+        #controls {
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 10px;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Recording Control</h1>
+    <div id="status">
+        {% if recording %}
+        <p>Currently recording</p>
+        <p id="duration">Recording duration: {{ recording_duration | round(2) }} seconds</p>
+        {% else %}
+        <p>Not recording</p>
+        {% endif %}
+        <p id="temperature">CPU temperature: {{ temperature }} C</p>
+        <p id="powerok">Power good: {% if power_ok %}yes :){% else %}no :({% endif %}</p>
+    </div>
+    <div id="controls">
+        <button onclick="startRecording()" {% if recording %}disabled{% endif %}>Start Recording</button>
+        <button onclick="stopRecording()" {% if not recording %}disabled{% endif %}>Stop Recording</button>
+    </div>
+    <!-- Camera preview -->
+    <div id="preview">
+        <img src="/preview" width="640" height="480"/>
+    </div>
+    <script>
+        function startRecording() {
+            fetch('/start_record')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.should_record) {
+                        console.log('Recording started!');
+                        location.reload();
+                    } else {
+                        console.error('Error starting recording!');
+                    }
+                });
+        }
+
+        function stopRecording() {
+            fetch('/stop_record')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.should_record) {
+                        console.log('Recording stopped!');
+                        location.reload();
+                    } else {
+                        console.error('Error stopping recording!');
+                    }
+                });
+        }
+
+        // Update device status every second
+        // recording: is recording
+        // recording_duration: how long recording
+        // should_record: requested recording state
+        // led_state: state of onboard LED
+        setInterval(getStatus, 1000);
+
+        function getStatus() {
+            const durationElement = document.getElementById('duration');
+            if (durationElement) {
+                // Get device status
+                fetch('/status')
+                    .then(response => response.json())
+                    .then(data => {
+                        // Update recording status
+                        const recording = data.recording;
+                        const recordingDuration = data.recording_duration;
+                        const shouldRecord = data.should_record;
+                        const ledState = data.led_state;
+                        if (recording) {
+                            durationElement.innerText = `Recording duration: ${formatTime(recordingDuration)}`;
+                            durationElement.style.color = ledState ? 'red' : 'black';
+                        } else {
+                            durationElement.innerText = 'Not recording';
+                        }
+                        // Update button states
+                        const startButton = document.querySelector('button[onclick="startRecording()"]');
+                        const stopButton = document.querySelector('button[onclick="stopRecording()"]');
+                        if (recording) {
+                            startButton.disabled = true;
+                            stopButton.disabled = false;
+                        } else {
+                            startButton.disabled = false;
+                            stopButton.disabled = true;
+                        }
+                    });
+            }
+        }
+
+        function formatTime(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const remainingSeconds = Math.floor(seconds % 60);
+            return `${hours > 0 ? hours + 'h ' : ''}${minutes > 0 ? minutes + 'm ' : ''}${remainingSeconds}s`;
+        }
+    </script>
+</body>
+
+</html>
